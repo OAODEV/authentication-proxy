@@ -1,0 +1,28 @@
+# This file is in the classic .ini format
+# It requires the [Service] heading
+[Service]
+
+# the name of the service. This is how the platform will identify this
+# service in names of containers and possibly other places in the
+# future. It should be unique across all services on the platform
+# the name must contain characters in [a-z 0-9 - _ .]
+name=AuthenticationProxy
+
+# the command that will run the unit tests. This will be executed by
+# fabric inside the container to test the container. The container and
+# code should be built such that this command properly tests the units
+# in the container.
+unittest_cmd=true 
+accept_cmd=true
+
+# The port that will be exposed by the container. The platform will use
+# this to set up routing between services during orchestration.
+service_port=8000
+
+# this service relies on certain envars to be present in the environment
+# all of the names here will be downcased then capitalized to enforce the
+# envar naming standard
+[Dependencies]
+Google_client_id
+Google_secret
+Google_scope
