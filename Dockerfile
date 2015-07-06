@@ -11,7 +11,7 @@ MAINTAINER matt.urban@adops.com
 # Then install a few external dependencies (python, pip, git and the
 # mock library).
 RUN sudo apt-get update
-RUN sudo apt-get install -y python python-pip python-dev python2.7-dev libpq-dev
+RUN sudo apt-get install -y python python-pip python-dev python2.7-dev
 
 ADD ./requirements.txt /app/requirements.txt
 
