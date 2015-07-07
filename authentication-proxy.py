@@ -21,30 +21,32 @@ app = flask.Flask(__name__)
 def is_approved_host(url):
     """ Is the referring or proxied URL whitelisted for use?"""
     approved = False
-    [approved = True if host in url for host in APPROVED_HOSTS]
+    for host in APPROVED_HOSTS:
+    	if host in url:
+    		 approved = True
     return approved
 
    
 def get_endpoint_response(url, request):
-    """ Given a URL and a Flask request object, return the contents of the URL.
+	""" Given a URL and a Flask request object, return the contents of the URL.
         Include authentication headers in forwarded request to allow URL to
         authorize. 
         
         Inspired in part by https://gist.github.com/gear11/8006132"""
-        url = 'https://{}'.format(url)
-        if not is_approved(url):
-            # URL is not approved
-            abort(403, "The referring or requested URL ({}) is not " \
-                       + "whitelisted for use by this authentication proxy."
-                       .format(url))
-        # Pass original Referer for subsequent resource requests
-        if flask.request.headers.get('referer'):
-            headers = { "Referer" : flask.request.headers.get('referer')}
-        else:
-            headers = {}
-        # Fetch the URL, and stream it back
-        return requests.get(url, stream=True, params=request.args,
-                            headers=headers)
+	url = 'https://{}'.format(url)
+	if not is_approved(url):
+		# URL is not approved
+		abort(403, "The referring or requested URL ({}) is not " \
+				   + "whitelisted for use by this authentication proxy."
+				   .format(url))
+	# Pass original Referer for subsequent resource requests
+	if flask.request.headers.get('referer'):
+		headers = { "Referer" : flask.request.headers.get('referer')}
+	else:
+		headers = {}
+	# Fetch the URL, and stream it back
+	return requests.get(url, stream=True, params=request.args,
+						headers=headers)
     
 
 @app.route('/')
@@ -61,7 +63,7 @@ def index():
 								flask.url_for('index')
 		return flask.redirect(flask.url_for('oauth2callback'))
     
-    """ We want to use environmental variables instead of a json file for 
+	""" We want to use environmental variables instead of a json file for 
         client secret information, so use OAuth2WebServerFlow instead of the
         `OAuth2Credentials.from_json` method found at:
         https://developers.google.com/api-client-library/python/guide/aaa_oauth#OAuth2WebServerFlow
