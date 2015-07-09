@@ -3,7 +3,7 @@ machine:
     - docker
   environment:
     herd_service_name: auth-proxy
-    herd_unittest_cmd: true
+    herd_unittest_cmd: python tests.py
 
     herd_build_tag: $(cat $CIRCLE_PROJECT_REPONAME/Version)_build.$(echo $CIRCLE_SHA1 | cut -c1-7)
 
