@@ -73,8 +73,9 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
         r.raise_for_status()
         app.logger.debug("Request response: {}".format(r))
         return flask.Response(generate_response_content(r), r.headers)
-    except SSLError, e:
-        flask.abort(505, str(e))
+    except requests.exceptions.SSLError, e:
+        flask.abort(505, "SSL certificate on destination domain failed "\
+                         + "verification")
     except Exception, e: 
         app.logger.error("{}: {}".format(r.status_code, r.reason))
         flask.abort(r.status_code, r.reason)
