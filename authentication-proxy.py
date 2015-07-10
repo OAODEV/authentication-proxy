@@ -2,22 +2,29 @@ import json
 import os
 import requests
 import logging
+import sys
 
 import flask
 import httplib2
+from urllib2 import HTTPError
 
 from oauth2client import client
 
 # Required environment variables
-GOOGLE_CLIENT_ID = os.getenv("Google_client_id", None)
-GOOGLE_SECRET = os.getenv("Google_secret", None)
-GOOGLE_SCOPE = os.getenv("Google_scope", None)
+GOOGLE_CLIENT_ID = os.environ.get("Google_client_id", None)
+GOOGLE_SECRET = os.environ.get("Google_secret", None)
+GOOGLE_SCOPE = os.environ.get("Google_scope", None)
 SERVICE_HOST = os.environ.get("service_host", "jsonplaceholder.typicode.com")
 SERVICE_PORT = os.environ.get("service_port", None)
 
 app = flask.Flask(__name__)
 app.logger.info("Application initialized")
 
+for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE):
+    if not env_var:
+        sys.exit("ERROR: Not all required environment variables are available.")
+
+# Library Functions
 def generate_response_content(response):
     """ Iterates over the response data. Requires `stream=True` set on the 
         request, this avoids reading the content at once into memory for large
@@ -26,33 +33,54 @@ def generate_response_content(response):
     app.logger.debug("Iterating over response content")
     for chunk in response.iter_content(chunk_size=1024, decode_unicode=True):
         yield chunk
+
+def update_header(headers, session):
+    """ Given Flask request headers and session, creates a new set of headers
+        with Authorization information. """
+
+    # Creating a copy of headers
+    headers_with_auth = {}
+    for key, value in headers:
+	    headers_with_auth[key] = value
+
+    app.logger.debug("Updating Authorization header")
+    email = json.loads(session['credentials'])['id_token']['email']
+    # In most situations, this value should be signed
+    headers_with_auth.update({"Authorization": email}) 
+
+    return headers_with_auth
+    
    
-def get_endpoint_response(request, service_host=SERVICE_HOST, port=SERVICE_PORT):
-    """ Given a Flask request object, service host and a port - return the 
-	    contents of the URL. Include authentication headers in forwarded request
-	    to allow service to authorize. 
+def get_endpoint_response(request, session, service_host=SERVICE_HOST,
+                          port=SERVICE_PORT):
+    """ Given a Flask request object, session, service host and a port - return
+        the contents of the URL. Include authentication headers in forwarded 
+        request to allow service to authorize. 
         
         Inspired in part by https://gist.github.com/gear11/8006132
     """
     if port:
-        url = 'http://{}:{}/{}'.format(service_host, port, "users")
+        url = 'https://{}:{}/{}'.format(service_host, port, "users")
     else:
-        url = 'http://{}/{}'.format(service_host, "users")
+        url = 'https://{}/{}'.format(service_host, "users")
 	
-	app.logger.debug("Updating Authorization header")
-	email = json.loads(flask.session['credentials'])['id_token']['email']
-	headers_with_auth = {}
-	for key, value in request.headers:
-	    headers_with_auth[key] = value
-	headers_with_auth.update({"Authorization": email})
+	headers_with_auth = update_header(request.headers, session)
 
 	app.logger.debug("Requesting {}".format(url))
-	r = requests.get(url, stream=True, params=request.args,
-	                 headers=headers_with_auth)
-	app.logger.debug("Request response: {}".format(r))
-	return flask.Response(generate_response_content(r), r.headers)
+    try:
+        r = requests.get(url, stream=True, params=request.args,
+                         headers=headers_with_auth, verify=True)
+        r.raise_for_status()
+        app.logger.debug("Request response: {}".format(r))
+        return flask.Response(generate_response_content(r), r.headers)
+    except SSLError, e:
+        flask.abort(505, str(e))
+    except Exception, e: 
+        app.logger.error("{}: {}".format(r.status_code, r.reason))
+        flask.abort(r.status_code, r.reason)
 
 
+# Routes
 @app.route('/')
 def index():
     """ Authenticate & return endpoint response for user 
@@ -74,36 +102,29 @@ def index():
     else:
         app.logger.debug("{} authenticated"
                         .format(credentials.id_token['email']))
-        try:
-            return get_endpoint_response(flask.request, SERVICE_HOST,
-                                         SERVICE_PORT)
-        except Exception, e:
-            if "certificate verify failed" in str(e):
-                flask.abort(505, str(e))
-            else:
-                flask.abort(500, str(e))
+        return get_endpoint_response(flask.request, flask.session,
+                                         SERVICE_HOST, SERVICE_PORT)
             
-
 
 @app.route('/oauth2callback')
 def oauth2callback():
-	""" Send user to Google for authentication"""
+    """ Send user to Google for authentication"""
 
-	google_redirect_uri = "{}oauth2callback".format(flask.request.url_root)
-	
-	""" OAuth2WebServerFlow:
-	    https://developers.google.com/api-client-library/python/guide/aaa_oauth#OAuth2WebServerFlow
-    """
-	flow = client.OAuth2WebServerFlow(client_id=GOOGLE_CLIENT_ID,
+    app.logger.debug("Create redirect URI for Google")
+    google_redirect_uri = "{}oauth2callback".format(flask.request.url_root)
+
+    # https://developers.google.com/api-client-library/python/guide/aaa_oauth#OAuth2WebServerFlow
+    app.logger.debug("Create OAuth2WebServerFlow")
+    flow = client.OAuth2WebServerFlow(client_id=GOOGLE_CLIENT_ID,
 									  client_secret=GOOGLE_SECRET,
 									  scope=GOOGLE_SCOPE,
 									  redirect_uri=google_redirect_uri)
 
-	if 'code' not in flask.request.args:
+    if 'code' not in flask.request.args:
 		app.logger.debug("Sending user to Google for authentication")
 		auth_uri = flow.step1_get_authorize_url()
 		return flask.redirect(auth_uri)
-	else:
+    else:
 		app.logger.debug("Exchanging an auth code for a Credentials object")
 		auth_code = flask.request.args.get('code')
 		credentials = flow.step2_exchange(auth_code)
