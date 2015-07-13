@@ -14,7 +14,7 @@ from oauth2client import client
 GOOGLE_CLIENT_ID = os.environ.get("Google_client_id", None)
 GOOGLE_SECRET = os.environ.get("Google_secret", None)
 GOOGLE_SCOPE = os.environ.get("Google_scope", None)
-SERVICE_HOST = os.environ.get("service_host", "jsonplaceholder.typicode.com")
+SERVICE_HOST = os.environ.get("service_host", None)
 SERVICE_PORT = os.environ.get("service_port", None)
 
 app = flask.Flask(__name__)
@@ -25,15 +25,6 @@ for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE):
         sys.exit("ERROR: Not all required environment variables are available.")
 
 # Library Functions
-def generate_response_content(response):
-    """ Iterates over the response data. Requires `stream=True` set on the 
-        request, this avoids reading the content at once into memory for large
-        responses.
-    """
-    app.logger.debug("Iterating over response content")
-    for chunk in response.iter_content(chunk_size=1024, decode_unicode=True):
-        yield chunk
-
 def update_header(headers, session):
     """ Given Flask request headers and session, creates a new set of headers
         with Authorization information. """
@@ -60,25 +51,28 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
         Inspired in part by https://gist.github.com/gear11/8006132
     """
     if port:
-        url = 'https://{}:{}/{}'.format(service_host, port, "users")
+        url = 'http://{}:{}/{}'.format(service_host, port, request.path)
     else:
-        url = 'https://{}/{}'.format(service_host, "users")
+        url = 'http://{}/{}'.format(service_host, request.path)
 	
 	headers_with_auth = update_header(request.headers, session)
 
 	app.logger.debug("Requesting {}".format(url))
     try:
         r = requests.get(url, stream=True, params=request.args,
-                         headers=headers_with_auth, verify=True)
-        r.raise_for_status()
+                         headers=request.headers, verify=True)
         app.logger.debug("Request response: {}".format(r))
-        return flask.Response(generate_response_content(r), r.headers)
+        return r.text, r.status_code, r.headers.items()
+
     except requests.exceptions.SSLError, e:
         flask.abort(505, "SSL certificate on destination domain failed "\
                          + "verification")
     except Exception, e: 
-        app.logger.error("{}: {}".format(r.status_code, r.reason))
-        flask.abort(r.status_code, r.reason)
+        app.logger.error("{} - {}: {}".format(str(e), r.status_code, r.reason))
+        try:
+            flask.abort(r.status_code, r.reason)
+        except Exception, abort_error:
+            flask.abort(500, str(e))
 
 
 # Routes
