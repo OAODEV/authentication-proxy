@@ -18,11 +18,21 @@ SERVICE_HOST = os.environ.get("service_host", None)
 SERVICE_PORT = os.environ.get("service_port", None)
 
 app = flask.Flask(__name__)
+
+
+std_out = logging.StreamHandler(sys.stdout)
+std_out.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+std_out.setFormatter(formatter)
+app.logger.addHandler(std_out)
+
 app.logger.info("Application initialized")
 
 for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE):
     if not env_var:
-        sys.exit("ERROR: Not all required environment variables are available.")
+        msg = "Not all required environment variables are available."
+        app.logger.error(msg)
+        sys.exit("ERROR: {}".format(msg))
 
 # Library Functions
 def update_header(headers, session):
