@@ -28,7 +28,8 @@ app.logger.addHandler(std_out)
 
 app.logger.info("Application initialized")
 
-for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE):
+# Enforces required environment variables
+for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST):
     if not env_var:
         msg = "Not all required environment variables are available."
         app.logger.error(msg)
@@ -60,15 +61,18 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
         
         Inspired in part by https://gist.github.com/gear11/8006132
     """
+    args = ''.join(','.join(map(str, x)) for x in request.args)
+    app.logger.debug("Request path: {}, Args: {}".format(request.path, args))
     if port:
-        url = 'http://{}:{}/{}'.format(service_host, port, request.path)
+        url = 'http://{}:{}{}'.format(service_host, port, request.path)
     else:
-        url = 'http://{}/{}'.format(service_host, request.path)
+        url = 'http://{}{}'.format(service_host, request.path)
 	
 	headers_with_auth = update_header(request.headers, session)
 
-	app.logger.debug("Requesting {}".format(url))
+    app.logger.debug("Requesting {}".format(url))
     try:
+        r = {}
         r = requests.get(url, stream=True, params=request.args,
                          headers=request.headers, verify=True)
         app.logger.debug("Request response: {}".format(r))
@@ -77,17 +81,20 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
     except requests.exceptions.SSLError, e:
         flask.abort(505, "SSL certificate on destination domain failed "\
                          + "verification")
-    except Exception, e: 
-        app.logger.error("{} - {}: {}".format(str(e), r.status_code, r.reason))
-        try:
+    except Exception, e:
+        if r:
+            app.logger.error("{} - {}: {}".format(str(e), r.status_code, r.reason))
             flask.abort(r.status_code, r.reason)
-        except Exception, abort_error:
+        else:
+            app.logger.error(str(e))
             flask.abort(500, str(e))
 
 
 # Routes
-@app.route('/')
-def index():
+# Catch-all routing inspired by http://flask.pocoo.org/snippets/57/
+@app.route('/', defaults={'location': ''})
+@app.route('/<path:location>')
+def index(location):
     """ Authenticate & return endpoint response for user 
     
         Google OAuth2 client documentation:
