@@ -61,19 +61,18 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
         
         Inspired in part by https://gist.github.com/gear11/8006132
     """
-    args = ''.join(','.join(map(str, x)) for x in request.args)
-    app.logger.debug("Request path: {}, Args: {}".format(request.path, args))
+
     if port:
-        url = 'http://{}:{}{}'.format(service_host, port, request.path)
+        url = 'http://{}:{}/{}'.format(service_host, port, session['location'])
     else:
-        url = 'http://{}{}'.format(service_host, request.path)
+        url = 'http://{}/{}'.format(service_host, session['location'])
 	
 	headers_with_auth = update_header(request.headers, session)
 
     app.logger.debug("Requesting {}".format(url))
     try:
         r = {}
-        r = requests.get(url, stream=True, params=request.args,
+        r = requests.get(url, stream=True, params=session['args'],
                          headers=request.headers, verify=True)
         app.logger.debug("Request response: {}".format(r))
         return r.text, r.status_code, r.headers.items()
@@ -100,6 +99,12 @@ def index(location):
         Google OAuth2 client documentation:
          * https://developers.google.com/api-client-library/python/auth/web-app
     """
+    
+    if location:
+        flask.session['location'] = location
+
+    if flask.request.args:
+        flask.session['args'] = flask.request.args
 
     if 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
