@@ -51,6 +51,16 @@ def update_header(headers, session):
     headers_with_auth.update({"Authorization": email}) 
 
     return headers_with_auth
+
+
+def get_url_to_proxy(service_host, port, location):
+    """ Give a service host (URI), port and location, returns URL to proxy"""
+
+    if port:
+        url = 'http://{}:{}/{}'.format(service_host, port, location)
+    else:
+        url = 'http://{}/{}'.format(service_host, location)
+    return url
     
    
 def get_endpoint_response(request, session, service_host=SERVICE_HOST,
@@ -61,6 +71,8 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
         
         Inspired in part by https://gist.github.com/gear11/8006132
     """
+
+    url = get_url_to_proxy(service_host, port, location)
 
     if port:
         url = 'http://{}:{}/{}'.format(service_host, port, session['location'])
@@ -105,6 +117,8 @@ def index(location):
 
     if flask.request.args:
         flask.session['args'] = flask.request.args
+    else if flask.request.form:
+        flask.session['args'] = flask.request.form
 
     if 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
