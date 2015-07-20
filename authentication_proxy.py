@@ -29,13 +29,6 @@ app.logger.addHandler(std_out)
 
 app.logger.info("Application initialized")
 
-# Enforces required environment variables
-for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST, 
-                SECRET_KEY):
-    if not env_var:
-        msg = "Not all required environment variables are available."
-        app.logger.error(msg)
-        sys.exit("ERROR: {}".format(msg))
 
 # Library Functions
 def update_header(headers, session):
@@ -165,6 +158,14 @@ def oauth2callback():
 
 
 if __name__ == '__main__':
+
+    # Enforces required environment variables
+    for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST, 
+                SECRET_KEY):
+        if not env_var:
+            msg = "Not all required environment variables are available."
+            app.logger.error(msg)
+            sys.exit("ERROR: {}".format(msg))
 	app.secret_key = SECRET_KEY
 	app.debug = True
 	app.run()

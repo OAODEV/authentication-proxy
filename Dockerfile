@@ -27,4 +27,4 @@ ADD . /app
 ADD Manifest /Manifest
 
 # Launch service
-CMD python authentication-proxy.py
+CMD python authentication_proxy.py

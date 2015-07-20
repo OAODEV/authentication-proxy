@@ -46,17 +46,6 @@ class TestiAdOpsUsers(unittest.TestCase):
         four = 2+2
         self.assertEqual(four, 4, "Um ... 2+2 doesn't equal 4?")
         
-    def test_require_env_vars(self):
-        """ Verifies that required variables are available in environment """
-
-        # Verify that required env vars are present
-        REQ_ENV_VARS = ('Google_client_id', 'Google_secret', 'Google_scope',
-                        'service_host', 'secret_key')        
-        for env_var in REQ_ENV_VARS:
-            self.assertIsNotNone(self.env_vars[env_var],
-                                 "Required environment variable {} is not set"
-                                 .format(env_var))
-        
     def test_update_header(self):
         """ Verifies that the header that goes in to update_header is returned
             with additional Authorization header (and only that update) """
