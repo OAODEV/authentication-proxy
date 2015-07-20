@@ -26,3 +26,5 @@ service_port=8000
 Google_client_id
 Google_secret
 Google_scope
+service_host
+secret_key
