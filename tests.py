@@ -95,8 +95,6 @@ class TestiAdOpsUsers(unittest.TestCase):
         expected_url = 'http://host/request/path/to/object'
         self.assertEqual(returned_url, expected_url)
 
-    def test_session_args(self):
-        pass
 
 
 if __name__ == '__main__':
