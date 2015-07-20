@@ -18,7 +18,8 @@ class TestiAdOpsUsers(unittest.TestCase):
                             ('Google_scope', 
                              'http://fAk3.sC0p3.com/3nDp01nT1 http://fAk3.sC0p3.com/3nDp01nT2'),
                             ('service_host', '123.4.5.6'),
-                            ('service_port', '1234')
+                            ('service_port', '1234'),
+                            ('service_key', 'fAk3_k3Y')
                            ]
         self.env_vars = {}
         for env_var in self.env_var_map:
@@ -46,13 +47,11 @@ class TestiAdOpsUsers(unittest.TestCase):
         self.assertEqual(four, 4, "Um ... 2+2 doesn't equal 4?")
         
     def test_require_env_vars(self):
-        """ Verifies that required variables are available in environment and
-            that if they weren't the application would give the expected
-            message."""
+        """ Verifies that required variables are available in environment """
 
         # Verify that required env vars are present
         REQ_ENV_VARS = ('Google_client_id', 'Google_secret', 'Google_scope',
-                        'service_host')        
+                        'service_host', 'secret_key')        
         for env_var in REQ_ENV_VARS:
             self.assertIsNotNone(self.env_vars[env_var],
                                  "Required environment variable {} is not set"

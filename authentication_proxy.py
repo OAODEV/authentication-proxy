@@ -16,6 +16,7 @@ GOOGLE_SECRET = os.environ.get("Google_secret", None)
 GOOGLE_SCOPE = os.environ.get("Google_scope", None)
 SERVICE_HOST = os.environ.get("service_host", None)
 SERVICE_PORT = os.environ.get("service_port", None)
+SECRET_KEY = os.environ.get("secret_key", None)
 
 app = flask.Flask(__name__)
 
@@ -29,7 +30,8 @@ app.logger.addHandler(std_out)
 app.logger.info("Application initialized")
 
 # Enforces required environment variables
-for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST):
+for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST, 
+                SECRET_KEY):
     if not env_var:
         msg = "Not all required environment variables are available."
         app.logger.error(msg)
@@ -162,7 +164,6 @@ def oauth2callback():
 
 
 if __name__ == '__main__':
-	import uuid
-	app.secret_key = str(uuid.uuid4())
+	app.secret_key = SECRET_KEY
 	app.debug = True
 	app.run()
