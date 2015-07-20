@@ -3,7 +3,7 @@ import unittest
 import os
 from datetime import datetime
 
-from authentication_proxy import update_header
+from authentication_proxy import update_header, get_url_to_proxy
 
 from flask import Flask
 
@@ -75,7 +75,25 @@ class TestiAdOpsUsers(unittest.TestCase):
 
     
     def test_get_url_to_proxy(self):
-        pass
+        """ Verifies that URL comes back as expected given the service host,
+            port (optional) and as the request's location (optional)
+            (derived from request's path) """
+        
+        returned_url = get_url_to_proxy('host', 1234, 'request/path/to/object')
+        expected_url = 'http://host:1234/request/path/to/object'
+        self.assertEqual(returned_url, expected_url)
+        
+        returned_url = get_url_to_proxy('host')
+        expected_url = 'http://host/'
+        self.assertEqual(returned_url, expected_url)
+        
+        returned_url = get_url_to_proxy('host', 1234)
+        expected_url = 'http://host:1234/'
+        self.assertEqual(returned_url, expected_url)
+        
+        returned_url = get_url_to_proxy('host', None, 'request/path/to/object')
+        expected_url = 'http://host/request/path/to/object'
+        self.assertEqual(returned_url, expected_url)
 
     def test_session_args(self):
         pass

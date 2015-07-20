@@ -53,8 +53,11 @@ def update_header(headers, session):
     return headers_with_auth
 
 
-def get_url_to_proxy(service_host, port, location):
+def get_url_to_proxy(service_host, port=None, location=None):
     """ Give a service host (URI), port and location, returns URL to proxy"""
+
+    if not location:
+        location=''
 
     if port:
         url = 'http://{}:{}/{}'.format(service_host, port, location)
