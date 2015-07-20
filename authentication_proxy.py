@@ -71,10 +71,21 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
     headers_with_auth = update_header(request.headers, session)
 
     app.logger.debug("Requesting {}".format(url))
+
+    r = {}
     try:
-        r = {}
-        r = requests.get(url, stream=True, params=session['args'],
-                         headers=headers_with_auth, verify=True)
+        if request.method == 'POST':  # Create
+            r = requests.post(url, stream=True, params=session['args'],
+                              headers=headers_with_auth, verify=True)
+        elif request.method == 'GET':  # Retrieve
+            r = requests.get(url, stream=True, params=session['args'],
+                             headers=headers_with_auth, verify=True)
+        elif request.method == 'PUT':  # Update
+            r = requests.put(url, stream=True, params=session['args'],
+                             headers=headers_with_auth, verify=True)
+        elif request.method == 'DELETE':  # Delete
+            r = requests.delete(url, stream=True, params=session['args'],
+                                headers=headers_with_auth, verify=True)
         app.logger.debug("Request response: {}".format(r))
         return r.text, r.status_code, r.headers.items()
 
@@ -92,8 +103,9 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
 
 # Routes
 # Catch-all routing inspired by http://flask.pocoo.org/snippets/57/
-@app.route('/', defaults={'location': None})
-@app.route('/<path:location>')
+@app.route('/', methods=['POST', 'GET', 'PUT', 'POST'],
+           defaults={'location': None})
+@app.route('/<path:location>', methods=['POST', 'GET', 'PUT', 'POST'])
 def index(location=None):
     """ Authenticate & return endpoint response for user
 
