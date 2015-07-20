@@ -159,6 +159,7 @@ def oauth2callback():
 		auth_code = flask.request.args.get('code')
 		credentials = flow.step2_exchange(auth_code)
 		flask.session['credentials'] = credentials.to_json()
+		app.logger.debug("User has 'logged in' via oauth2callback")
 		return flask.redirect(flask.url_for('index'))
 				
 
