@@ -3,6 +3,8 @@ import unittest
 import os
 from datetime import datetime
 
+from authentication_proxy import update_header
+
 from flask import Flask
 
 
@@ -57,7 +59,20 @@ class TestiAdOpsUsers(unittest.TestCase):
                                  .format(env_var))
         
     def test_update_header(self):
-        pass
+        """ Verifies that the header that goes in to update_header is returned
+            with additional Authorization header (and only that update) """
+
+        fake_session = {}
+        fake_session['credentials'] = '{"id_token": {"email":"fake@email.com"}}'
+        
+        fake_header = {'Fake Header Field': 'Fake Header Value'}
+        
+        headers_with_auth = update_header(fake_header, fake_session)
+        expected_headers = fake_header
+        expected_headers['Authorization']='fake@email.com'
+        
+        self.assertEqual(headers_with_auth, expected_headers)
+
     
     def test_get_url_to_proxy(self):
         pass
