@@ -42,13 +42,13 @@ def update_header(headers, session):
 
     # Creating a copy of headers
     headers_with_auth = {}
-    for key, value in headers:
+    for key, value in headers.items():
 	    headers_with_auth[key] = value
 
     app.logger.debug("Updating Authorization header")
     email = json.loads(session['credentials'])['id_token']['email']
     # In most situations, this value should be signed
-    headers_with_auth.update({"Authorization": email}) 
+    headers_with_auth.update({"Authorization": str(email)}) 
 
     return headers_with_auth
 
@@ -63,7 +63,7 @@ def get_url_to_proxy(service_host, port, location):
     return url
     
    
-def get_endpoint_response(request, session, service_host=SERVICE_HOST,
+def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
                           port=SERVICE_PORT):
     """ Given a Flask request object, session, service host and a port - return
         the contents of the URL. Include authentication headers in forwarded 
@@ -73,13 +73,7 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
     """
 
     url = get_url_to_proxy(service_host, port, location)
-
-    if port:
-        url = 'http://{}:{}/{}'.format(service_host, port, session['location'])
-    else:
-        url = 'http://{}/{}'.format(service_host, session['location'])
-	
-	headers_with_auth = update_header(request.headers, session)
+    headers_with_auth = update_header(request.headers, session)
 
     app.logger.debug("Requesting {}".format(url))
     try:
@@ -103,21 +97,20 @@ def get_endpoint_response(request, session, service_host=SERVICE_HOST,
 
 # Routes
 # Catch-all routing inspired by http://flask.pocoo.org/snippets/57/
-@app.route('/', defaults={'location': ''})
+@app.route('/', defaults={'location': None})
 @app.route('/<path:location>')
-def index(location):
+def index(location=None):
     """ Authenticate & return endpoint response for user 
     
         Google OAuth2 client documentation:
          * https://developers.google.com/api-client-library/python/auth/web-app
     """
-    
     if location:
         flask.session['location'] = location
 
     if flask.request.args:
         flask.session['args'] = flask.request.args
-    else if flask.request.form:
+    elif flask.request.form:
         flask.session['args'] = flask.request.form
 
     if 'credentials' not in flask.session:
@@ -133,7 +126,7 @@ def index(location):
     else:
         app.logger.debug("{} authenticated"
                         .format(credentials.id_token['email']))
-        return get_endpoint_response(flask.request, flask.session,
+        return get_endpoint_response(flask.request, flask.session, location,
                                          SERVICE_HOST, SERVICE_PORT)
             
 
