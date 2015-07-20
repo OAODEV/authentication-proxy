@@ -57,7 +57,7 @@ class TestiAdOpsUsers(unittest.TestCase):
         
         headers_with_auth = update_header(fake_header, fake_session)
         expected_headers = fake_header
-        expected_headers['Authorization']='fake@email.com'
+        expected_headers['X-Authenticated-Email']='fake@email.com'
         
         self.assertEqual(headers_with_auth, expected_headers)
 

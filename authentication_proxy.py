@@ -33,7 +33,7 @@ app.logger.info("Application initialized")
 # Library Functions
 def update_header(headers, session):
     """ Given Flask request headers and session, creates a new set of headers
-        with Authorization information. """
+        with `X-Authenticated-Email` header. """
 
     # Creating a copy of headers
     headers_with_auth = {}
@@ -43,7 +43,7 @@ def update_header(headers, session):
     app.logger.debug("Updating Authorization header")
     email = json.loads(session['credentials'])['id_token']['email']
     # In most situations, this value should be signed
-    headers_with_auth.update({"Authorization": str(email)}) 
+    headers_with_auth.update({"X-Authenticated-Email": str(email)}) 
 
     return headers_with_auth
 
