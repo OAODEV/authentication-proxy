@@ -5,9 +5,6 @@ import logging
 import sys
 
 import flask
-import httplib2
-from urllib2 import HTTPError
-
 from oauth2client import client
 
 # Set environment variables
@@ -38,12 +35,12 @@ def update_header(headers, session):
     # Creating a copy of headers
     headers_with_auth = {}
     for key, value in headers.items():
-	    headers_with_auth[key] = value
+        headers_with_auth[key] = value
 
     app.logger.debug("Updating Authorization header")
     email = json.loads(session['credentials'])['id_token']['email']
     # In most situations, this value should be signed
-    headers_with_auth.update({"X-Authenticated-Email": str(email)}) 
+    headers_with_auth.update({"X-Authenticated-Email": str(email)})
 
     return headers_with_auth
 
@@ -52,21 +49,21 @@ def get_url_to_proxy(service_host, port=None, location=None):
     """ Give a service host (URI), port and location, returns URL to proxy"""
 
     if not location:
-        location=''
+        location = ''
 
     if port:
         url = 'http://{}:{}/{}'.format(service_host, port, location)
     else:
         url = 'http://{}/{}'.format(service_host, location)
     return url
-    
-   
+
+
 def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
                           port=SERVICE_PORT):
     """ Given a Flask request object, session, service host and a port - return
-        the contents of the URL. Include authentication headers in forwarded 
-        request to allow service to authorize. 
-        
+        the contents of the URL. Include authentication headers in forwarded
+        request to allow service to authorize.
+
         Inspired in part by https://gist.github.com/gear11/8006132
     """
 
@@ -82,7 +79,7 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
         return r.text, r.status_code, r.headers.items()
 
     except requests.exceptions.SSLError, e:
-        flask.abort(505, "SSL certificate on destination domain failed "\
+        flask.abort(505, "SSL certificate on destination domain failed "
                          + "verification")
     except Exception, e:
         if r:
@@ -98,8 +95,8 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
 @app.route('/', defaults={'location': None})
 @app.route('/<path:location>')
 def index(location=None):
-    """ Authenticate & return endpoint response for user 
-    
+    """ Authenticate & return endpoint response for user
+
         Google OAuth2 client documentation:
          * https://developers.google.com/api-client-library/python/auth/web-app
     """
@@ -114,7 +111,7 @@ def index(location=None):
     if 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
         return flask.redirect(flask.url_for('oauth2callback'))
-        
+
     credentials = client.OAuth2Credentials.from_json(flask.session['credentials'])
 
     if credentials.access_token_expired:
@@ -123,11 +120,11 @@ def index(location=None):
         return flask.redirect(flask.url_for('oauth2callback'))
     else:
         app.logger.debug("{} authenticated"
-                        .format(credentials.id_token['email']))
-        return get_endpoint_response(flask.request, flask.session, 
+                         .format(credentials.id_token['email']))
+        return get_endpoint_response(flask.request, flask.session,
                                      flask.session['location'], SERVICE_HOST,
                                      SERVICE_PORT)
-            
+
 
 @app.route('/oauth2callback')
 def oauth2callback():
@@ -139,33 +136,32 @@ def oauth2callback():
     # https://developers.google.com/api-client-library/python/guide/aaa_oauth#OAuth2WebServerFlow
     app.logger.debug("Create OAuth2WebServerFlow")
     flow = client.OAuth2WebServerFlow(client_id=GOOGLE_CLIENT_ID,
-									  client_secret=GOOGLE_SECRET,
-									  scope=GOOGLE_SCOPE,
-									  redirect_uri=google_redirect_uri)
+                                      client_secret=GOOGLE_SECRET,
+                                      scope=GOOGLE_SCOPE,
+                                      redirect_uri=google_redirect_uri)
 
     if 'code' not in flask.request.args:
-		app.logger.debug("Sending user to Google for authentication")
-		auth_uri = flow.step1_get_authorize_url()
-		return flask.redirect(auth_uri)
+        app.logger.debug("Sending user to Google for authentication")
+        auth_uri = flow.step1_get_authorize_url()
+        return flask.redirect(auth_uri)
     else:
-		app.logger.debug("Exchanging an auth code for a Credentials object")
-		auth_code = flask.request.args.get('code')
-		credentials = flow.step2_exchange(auth_code)
-		flask.session['credentials'] = credentials.to_json()
-		app.logger.debug("User has 'logged in' via oauth2callback")
-		return flask.redirect(flask.url_for('index'))
-				
+        app.logger.debug("Exchanging an auth code for a Credentials object")
+        auth_code = flask.request.args.get('code')
+        credentials = flow.step2_exchange(auth_code)
+        flask.session['credentials'] = credentials.to_json()
+        app.logger.debug("User has 'logged in' via oauth2callback")
+        return flask.redirect(flask.url_for('index'))
 
 
 if __name__ == '__main__':
 
     # Enforces required environment variables
-    for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST, 
-                FLASK_SECRET_KEY):
+    for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST,
+                    FLASK_SECRET_KEY):
         if not env_var:
             msg = "Not all required environment variables are available."
             app.logger.error(msg)
             sys.exit("ERROR: {}".format(msg))
-	app.secret_key = FLASK_SECRET_KEY
-	app.debug = True
-	app.run()
+    app.secret_key = FLASK_SECRET_KEY
+    app.debug = True
+    app.run()
