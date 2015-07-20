@@ -6,7 +6,7 @@
 # service in names of containers and possibly other places in the
 # future. It should be unique across all services on the platform
 # the name must contain characters in [a-z 0-9 - _ .]
-name=AuthenticationProxy
+name=auth-proxy
 
 # the command that will run the unit tests. This will be executed by
 # fabric inside the container to test the container. The container and
