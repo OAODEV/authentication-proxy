@@ -3,7 +3,7 @@
 ## Synopsis
 
 Receives a request, authenticates the user via Google, and forwards the request
-to an endpoint, 
+to an endpoint, and returns streamed response from the endpoint.
 
 ## Installation
 
@@ -12,8 +12,7 @@ to an endpoint,
 
 ## Tests
 
-Tests are not yet written for this, but when they are ... they will be able to 
-run by executing the following:
+Tests are run by executing the following:
 
 `python tests.py`
 
