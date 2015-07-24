@@ -28,16 +28,16 @@ def get_secrets():
     secrets = {}
     for name in ['google-client-id', 'google-secret', 'secret-key']:
         path = os.path.join(SECRETS_PATH, name)
-        print path
+
         with open(path, 'r') as secret_file:
             secrets[file] = secret_file.read()
     return secrets
 
 secrets = get_secrets()
-GOOGLE_CLIENT_ID = secrets.get('Google_client_id', '').strip()
-GOOGLE_SECRET = secrets.get('Google_secret', '').strip()
+GOOGLE_CLIENT_ID = secrets.get('google-client-id', '').strip()
+GOOGLE_SECRET = secrets.get('google-secret', '').strip()
 FLASK_SECRET_KEY = secrets.get(
-    'secret_key', os.urandom(32).encode('hex')).strip()
+    'secret-key', os.urandom(32).encode('hex')).strip()
 
 
 app = flask.Flask(__name__)
@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
     for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST,
                     FLASK_SECRET_KEY):
-        if not env_var:
+        if not env_var or env_var == 'placeholder':
             msg = "Missing required settings."
             app.logger.error(msg)
             if not DEBUG:
