@@ -27,7 +27,7 @@ class TestiAdOpsUsers(unittest.TestCase):
         secrets = get_secrets()
         self.assertEqual(secrets['google-client-id'], 'placeholder')
         self.assertEqual(secrets['google-secret'], 'placeholder')
-        self.assertEausl(secrets['secret-key'], '')
+        self.assertEqual(secrets['secret-key'], '')
 
     def test_update_header(self):
         """ Verifies that the header that goes in to update_header is returned
