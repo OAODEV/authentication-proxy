@@ -24,6 +24,7 @@ RUN pip install -r requirements.txt
 
 ADD . /app
 
+RUN touch /var/secrets
 ADD Manifest /Manifest
 
 # Launch service
