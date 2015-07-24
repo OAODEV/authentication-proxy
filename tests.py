@@ -14,7 +14,7 @@ class TestiAdOpsUsers(unittest.TestCase):
 
     def tearDown(self):
         """Restores original environment variables"""
-        self.patcher.stop()
+        pass
 
     def test_sanity(self):
         """Proves test suite is working"""
