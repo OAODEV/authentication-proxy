@@ -173,7 +173,7 @@ def oauth2callback():
 
     # https://developers.google.com/api-client-library/python/guide/aaa_oauth#OAuth2WebServerFlow
     app.logger.debug("Create OAuth2WebServerFlow")
-    flow = client.OAuth2WebServerFlow(client_id=GOOGLE_Client_ID,
+    flow = client.OAuth2WebServerFlow(client_id=GOOGLE_CLIENT_ID,
                                       client_secret=GOOGLE_SECRET,
                                       scope=GOOGLE_SCOPE,
                                       redirect_uri=google_redirect_uri)
