@@ -202,4 +202,4 @@ if __name__ == '__main__':
 
     app.secret_key = FLASK_SECRET_KEY
     app.debug = DEBUG
-    app.run()
+    app.run(host="0.0.0.0", port=5000)
