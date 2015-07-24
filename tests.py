@@ -3,7 +3,7 @@ import os
 
 from flask import Flask
 
-from authentication_proxy import update_header, get_url_to_proxy
+from authentication_proxy import update_header, get_url_to_proxy, get_secrets
 
 class TestiAdOpsUsers(unittest.TestCase):
 
@@ -21,6 +21,13 @@ class TestiAdOpsUsers(unittest.TestCase):
 
         four = 2+2
         self.assertEqual(four, 4, "Um ... 2+2 doesn't equal 4?")
+
+    def test_get_secrets(self):
+        """ get secrets should return a dict of secrets """
+        secrets = get_secrets()
+        self.assertEqual(secrets['google-client-id'], 'placeholder')
+        self.assertEqual(secrets['google-secret'], 'placeholder')
+        self.assertEausl(secrets['secret-key'], '')
 
     def test_update_header(self):
         """ Verifies that the header that goes in to update_header is returned

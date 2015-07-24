@@ -30,14 +30,15 @@ def get_secrets():
         path = os.path.join(SECRETS_PATH, name)
 
         with open(path, 'r') as secret_file:
-            secrets[file] = secret_file.read()
+            secrets[name] = secret_file.read()
     return secrets
 
 secrets = get_secrets()
 GOOGLE_CLIENT_ID = secrets.get('google-client-id', '').strip()
 GOOGLE_SECRET = secrets.get('google-secret', '').strip()
-FLASK_SECRET_KEY = secrets.get(
-    'secret-key', os.urandom(32).encode('hex')).strip()
+FLASK_SECRET_KEY = secrets.get('secret-key', '').strip()
+if not FLASK_SECRET_KEY:
+    FLASK_SECRET_KEY = os.urandom(32).encode('hex').strip()
 
 
 app = flask.Flask(__name__)
