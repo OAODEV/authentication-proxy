@@ -25,8 +25,11 @@ else:
     DEBUG = True
 
 def get_secrets():
-    with open(SECRETS_PATH, 'r') as secrets_file:
-        secrets = dict([l.split('=') for l in secrets_file.readlines()])
+    secrets = {}
+    for name in ['google-client-id', 'google-secret', 'secret-key']:
+        path = os.path.join(SECRETS_PATH, name)
+        with open(path, 'r') as secret_file:
+            secret[file] = secret_file.read()
     return secrets
 
 secrets = get_secrets()
@@ -168,7 +171,7 @@ def oauth2callback():
 
     # https://developers.google.com/api-client-library/python/guide/aaa_oauth#OAuth2WebServerFlow
     app.logger.debug("Create OAuth2WebServerFlow")
-    flow = client.OAuth2WebServerFlow(client_id=GOOGLE_CLIENT_ID,
+    flow = client.OAuth2WebServerFlow(client_id=GOOGLE_Client_ID,
                                       client_secret=GOOGLE_SECRET,
                                       scope=GOOGLE_SCOPE,
                                       redirect_uri=google_redirect_uri)
