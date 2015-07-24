@@ -8,8 +8,6 @@ import flask
 from oauth2client import client
 
 # Set environment variables
-#GOOGLE_CLIENT_ID = os.environ.get("Google_client_id", None)
-#GOOGLE_SECRET = os.environ.get("Google_secret", None)
 GOOGLE_SCOPE = os.environ.get(
     "Google_scope",
     "https://www.googleapis.com/auth/userinfo.email " + \
@@ -19,7 +17,6 @@ GOOGLE_SCOPE = os.environ.get(
 SERVICE_HOST = os.environ.get("service_host", '127.0.0.1')
 SERVICE_PORT = os.environ.get("service_port", '8000')
 SECRETS_PATH = os.environ.get("secrets_path", '/var/secrets')
-#FLASK_SECRET_KEY = os.environ.get("secret_key", None)
 
 ENV = os.environ.get("Environment_name", None)
 if ENV in ['production', 'stage']:
