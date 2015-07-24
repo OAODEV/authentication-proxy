@@ -28,6 +28,7 @@ def get_secrets():
     secrets = {}
     for name in ['google-client-id', 'google-secret', 'secret-key']:
         path = os.path.join(SECRETS_PATH, name)
+        print path
         with open(path, 'r') as secret_file:
             secrets[file] = secret_file.read()
     return secrets
@@ -195,7 +196,8 @@ if __name__ == '__main__':
         if not env_var:
             msg = "Missing required settings."
             app.logger.error(msg)
-            sys.exit("ERROR: {}".format(msg))
+            if not DEBUG:
+                sys.exit("ERROR: {}".format(msg))
 
     app.secret_key = FLASK_SECRET_KEY
     app.debug = DEBUG
