@@ -29,7 +29,7 @@ def get_secrets():
     for name in ['google-client-id', 'google-secret', 'secret-key']:
         path = os.path.join(SECRETS_PATH, name)
         with open(path, 'r') as secret_file:
-            secret[file] = secret_file.read()
+            secrets[file] = secret_file.read()
     return secrets
 
 secrets = get_secrets()
