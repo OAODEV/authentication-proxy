@@ -26,11 +26,19 @@ else:
 
 def get_secrets():
     secrets = {}
-    for name in ['google-client-id', 'google-secret', 'secret-key']:
-        path = os.path.join(SECRETS_PATH, name)
+    ''' Maps changes in naming conventions between our vanilla Linux
+        naming convention and our k8s naming convention
+    '''
+    secret_names = {'google-client-id': 'Google_client_id',
+                   'google-secret': 'Google_secret',
+                   'secret-key': 'secret_key'}
+    for name in secret_names:
+        secrets[name] = os.environ.get(secret_names[name], None)
+        if not secrets[name]:
+            path = os.path.join(SECRETS_PATH, name)
 
-        with open(path, 'r') as secret_file:
-            secrets[name] = secret_file.read()
+            with open(path, 'r') as secret_file:
+                secrets[name] = secret_file.read()
     return secrets
 
 secrets = get_secrets()
