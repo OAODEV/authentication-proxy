@@ -8,12 +8,38 @@ import flask
 from oauth2client import client
 
 # Set environment variables
-GOOGLE_CLIENT_ID = os.environ.get("Google_client_id", None)
-GOOGLE_SECRET = os.environ.get("Google_secret", None)
-GOOGLE_SCOPE = os.environ.get("Google_scope", None)
-SERVICE_HOST = os.environ.get("service_host", None)
-SERVICE_PORT = os.environ.get("service_port", None)
-FLASK_SECRET_KEY = os.environ.get("secret_key", None)
+GOOGLE_SCOPE = os.environ.get(
+    "Google_scope",
+    "https://www.googleapis.com/auth/userinfo.email " + \
+    "https://www.google.com/apis/ads/publisher " + \
+    "https://www.googleapis.com/auth/plus.me"
+)
+SERVICE_HOST = os.environ.get("service_host", '127.0.0.1')
+SERVICE_PORT = os.environ.get("service_port", '8000')
+SECRETS_PATH = os.environ.get("secrets_path", '/var/secrets')
+
+ENV = os.environ.get("Environment_name", None)
+if ENV in ['production', 'stage']:
+    DEBUG = False
+else:
+    DEBUG = True
+
+def get_secrets():
+    secrets = {}
+    for name in ['google-client-id', 'google-secret', 'secret-key']:
+        path = os.path.join(SECRETS_PATH, name)
+
+        with open(path, 'r') as secret_file:
+            secrets[name] = secret_file.read()
+    return secrets
+
+secrets = get_secrets()
+GOOGLE_CLIENT_ID = secrets.get('google-client-id', '').strip()
+GOOGLE_SECRET = secrets.get('google-secret', '').strip()
+FLASK_SECRET_KEY = secrets.get('secret-key', '').strip()
+if not FLASK_SECRET_KEY:
+    FLASK_SECRET_KEY = os.urandom(32).encode('hex').strip()
+
 
 app = flask.Flask(__name__)
 
@@ -164,16 +190,16 @@ def oauth2callback():
         app.logger.debug("User has 'logged in' via oauth2callback")
         return flask.redirect(flask.url_for('index'))
 
-
 if __name__ == '__main__':
 
-    # Enforces required environment variables
     for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST,
                     FLASK_SECRET_KEY):
-        if not env_var:
-            msg = "Not all required environment variables are available."
+        if not env_var or env_var == 'placeholder':
+            msg = "Missing required settings."
             app.logger.error(msg)
-            sys.exit("ERROR: {}".format(msg))
+            if not DEBUG:
+                sys.exit("ERROR: {}".format(msg))
+
     app.secret_key = FLASK_SECRET_KEY
-    app.debug = True
+    app.debug = DEBUG
     app.run("0.0.0.0:5000", threaded=True)

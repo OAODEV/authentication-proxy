@@ -24,6 +24,11 @@ RUN pip install -r requirements.txt
 
 ADD . /app
 
+RUN mkdir /var/secrets
+RUN printf 'placeholder' > /var/secrets/google-client-id
+RUN printf 'placeholder' > /var/secrets/google-secret
+RUN touch /var/secrets/secret-key
+
 ADD Manifest /Manifest
 
 # Launch service
