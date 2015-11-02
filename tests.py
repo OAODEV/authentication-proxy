@@ -1,48 +1,33 @@
 import unittest
 import os
 
-from authentication_proxy import update_header, get_url_to_proxy
-
 from flask import Flask
 
+from authentication_proxy import update_header, get_url_to_proxy, get_secrets
 
 class TestiAdOpsUsers(unittest.TestCase):
 
     def setUp(self):
-
-        # Replace environment variables with testing value
-        self.env_var_map = [('Google_client_id', 'fAk3_cL13Nt_1D'),
-                            ('Google_secret', 'fAk3_53CReT'),
-                            ('Google_scope',
-                             'http://fAk3.sC0p3.com/3nDp01nT1 http://fAk3.sC0p3.com/3nDp01nT2'),
-                            ('service_host', '123.4.5.6'),
-                            ('service_port', '1234'),
-                            ('service_key', 'fAk3_k3Y')
-                            ]
-        self.env_vars = {}
-        for env_var in self.env_var_map:
-            # Store original environment variable
-            self.env_vars[env_var[0]] = os.environ.get(env_var[0], None)
-            # Set environment variable to testing value
-            os.environ[env_var[0]] = env_var[1]
-
         self.app = Flask('auth-proxy')
         self.client = self.app.test_client()
 
+
     def tearDown(self):
         """Restores original environment variables"""
-
-        for env_var in self.env_var_map:
-            if self.env_vars[env_var[0]]:
-                os.environ[env_var[0]] = self.env_vars[env_var[0]]
-            else:
-                del os.environ[env_var[0]]
+        pass
 
     def test_sanity(self):
         """Proves test suite is working"""
 
         four = 2+2
         self.assertEqual(four, 4, "Um ... 2+2 doesn't equal 4?")
+
+    def test_get_secrets(self):
+        """ get secrets should return a dict of secrets """
+        secrets = get_secrets()
+        self.assertEqual(secrets['google-client-id'], 'placeholder')
+        self.assertEqual(secrets['google-secret'], 'placeholder')
+        self.assertEqual(secrets['secret-key'], '')
 
     def test_update_header(self):
         """ Verifies that the header that goes in to update_header is returned

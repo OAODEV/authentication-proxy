@@ -12,7 +12,7 @@ name=auth-proxy
 # fabric inside the container to test the container. The container and
 # code should be built such that this command properly tests the units
 # in the container.
-unittest_cmd=python tests.py 
+unittest_cmd=python tests.py
 accept_cmd=true
 
 # The port that will be exposed by the container. The platform will use
