@@ -75,9 +75,14 @@ def update_header(headers, session):
         headers_with_auth[key] = value
 
     app.logger.debug("Updating Authorization header")
-    email = json.loads(session['credentials'])['id_token']['email']
-    # In most situations, this value should be signed
-    headers_with_auth.update({"X-Authenticated-Email": str(email)})
+    try:
+        email = json.loads(session['credentials'])['id_token']['email']
+        # In most situations, this value should be signed
+        headers_with_auth.update({"X-Authenticated-Email": str(email)})
+    except KeyError:
+        authenticated_token = json.loads(
+            session['credentials'])['authenticated_token']
+        headers_with_auth.update({"X-Authenticated-Token": "CI"})
 
     return headers_with_auth
 
@@ -139,7 +144,7 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
 
 def authentic_cci_token(t):
     """ returns True if the given token is authentic """
-    configured_cci_token = secrets.get('ci-token', None)
+    configured_cci_token = secrets.get('ci-token', None).strip()
     if configured_cci_token is not None and t is not None:
         # cci token is configured and we were passed a token to check
         app.logger.debug("Checking a token")
@@ -174,6 +179,7 @@ def index(location=None):
     if authentic_cci_token(
             flask.request.headers.get('X-CI-Token', None).strip()):
         app.logger.debug("CI token authenticted")
+        flask.session['credentials'] = '{"authenticated_token": "CI"}'
     elif 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
         return flask.redirect(flask.url_for('oauth2callback'))
