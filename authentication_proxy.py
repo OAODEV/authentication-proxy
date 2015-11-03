@@ -170,7 +170,7 @@ def index(location=None):
 
     # this controll flow is starting to get hairy and I don't see test coverage
     # let's look into refactoring for clarity.
-    if authentic_token(flask.request.headers['X-CI-Token']):
+    if authentic_cci_token(flask.request.headers['X-CI-Token']):
         app.logger.debug("Application token authenticted")
     elif 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
