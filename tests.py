@@ -1,9 +1,15 @@
 import unittest
 import os
+import uuid
 
 from flask import Flask
 
-from authentication_proxy import update_header, get_url_to_proxy, get_secrets
+from authentication_proxy import (
+    authentic_cci_token,
+    get_secrets,
+    get_url_to_proxy,
+    update_header,
+)
 
 class TestiAdOpsUsers(unittest.TestCase):
 
@@ -11,13 +17,12 @@ class TestiAdOpsUsers(unittest.TestCase):
         self.app = Flask('auth-proxy')
         self.client = self.app.test_client()
 
-
     def tearDown(self):
-        """Restores original environment variables"""
+        """ Restores original environment variables """
         pass
 
     def test_sanity(self):
-        """Proves test suite is working"""
+        """ Proves test suite is working """
 
         four = 2+2
         self.assertEqual(four, 4, "Um ... 2+2 doesn't equal 4?")
@@ -64,6 +69,12 @@ class TestiAdOpsUsers(unittest.TestCase):
         returned_url = get_url_to_proxy('host', None, 'request/path/to/object')
         expected_url = 'http://host/request/path/to/object'
         self.assertEqual(returned_url, expected_url)
+
+    def test_token_authentication(self):
+        """ Verifies that the token authentication function will accept correct
+            tokens and reject incorrect tokens """
+        self.assertTrue(authentic_cci_token("placeholder"))
+        self.assertFalse(authentic_cci_token("notplaceholder"))
 
 
 if __name__ == '__main__':

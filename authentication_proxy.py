@@ -25,13 +25,15 @@ else:
     DEBUG = True
 
 def get_secrets():
-    secrets = {}
     ''' Maps changes in naming conventions between our vanilla Linux
         naming convention and our k8s naming convention
     '''
+    secrets = {}
     secret_names = {'google-client-id': 'Google_client_id',
-                   'google-secret': 'Google_secret',
-                   'secret-key': 'secret_key'}
+                    'google-secret': 'Google_secret',
+                    'secret-key': 'secret_key',
+                    'ci-token': 'ci_token',
+                   }
     for name in secret_names:
         secrets[name] = os.environ.get(secret_names[name], None)
         if not secrets[name]:
@@ -45,6 +47,7 @@ secrets = get_secrets()
 GOOGLE_CLIENT_ID = secrets.get('google-client-id', '').strip()
 GOOGLE_SECRET = secrets.get('google-secret', '').strip()
 FLASK_SECRET_KEY = secrets.get('secret-key', '').strip()
+CI_TOKEN = secrets.get('ci-token', None)
 if not FLASK_SECRET_KEY:
     FLASK_SECRET_KEY = os.urandom(32).encode('hex').strip()
 
@@ -134,6 +137,16 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
             app.logger.error(str(e))
             flask.abort(500, str(e))
 
+def authentic_cci_token(t):
+    """ returns True if the given token is authentic """
+    configured_cci_token = secrets.get('ci-token', None)
+    if configured_cci_token is not None:
+        # cci token is configured
+        return configured_cci_token == t
+    else:
+        # no cci token configured
+        return False
+
 
 # Routes
 # Catch-all routing inspired by http://flask.pocoo.org/snippets/57/
@@ -146,6 +159,7 @@ def index(location=None):
         Google OAuth2 client documentation:
          * https://developers.google.com/api-client-library/python/auth/web-app
     """
+
     if location:
         flask.session['location'] = location
 
@@ -154,22 +168,32 @@ def index(location=None):
     elif flask.request.form:
         flask.session['args'] = flask.request.form
 
-    if 'credentials' not in flask.session:
+    # this controll flow is starting to get hairy and I don't see test coverage
+    # let's look into refactoring for clarity.
+    if authentic_token(flask.request.headers['X-CI-Token']):
+        app.logger.debug("Application token authenticted")
+    elif 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
         return flask.redirect(flask.url_for('oauth2callback'))
 
-    credentials = client.OAuth2Credentials.from_json(flask.session['credentials'])
-
-    if credentials.access_token_expired:
-        app.logger.debug("{} token expired, initializing OAuth2workflow"
-                         .format(credentials.id_token['email']))
-        return flask.redirect(flask.url_for('oauth2callback'))
     else:
-        app.logger.debug("{} authenticated"
+        credentials = client.OAuth2Credentials.from_json(flask.session['credentials'])
+
+        if credentials.access_token_expired:
+            app.logger.debug("{} token expired, initializing OAuth2workflow"
                          .format(credentials.id_token['email']))
-        return get_endpoint_response(flask.request, flask.session,
-                                     flask.session['location'], SERVICE_HOST,
-                                     SERVICE_PORT)
+            return flask.redirect(flask.url_for('oauth2callback'))
+        else:
+            app.logger.debug("{} authenticated"
+                         .format(credentials.id_token['email']))
+
+    return get_endpoint_response(
+        flask.request,
+        flask.session,
+        flask.session['location'],
+        SERVICE_HOST,
+        SERVICE_PORT,
+    )
 
 
 @app.route('/oauth2callback')
@@ -201,7 +225,7 @@ def oauth2callback():
 if __name__ == '__main__':
 
     for env_var in (GOOGLE_CLIENT_ID, GOOGLE_SECRET, GOOGLE_SCOPE, SERVICE_HOST,
-                    FLASK_SECRET_KEY):
+                    FLASK_SECRET_KEY, CI_TOKEN):
         if not env_var or env_var == 'placeholder':
             msg = "Missing required settings."
             app.logger.error(msg)
