@@ -140,11 +140,12 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
 def authentic_cci_token(t):
     """ returns True if the given token is authentic """
     configured_cci_token = secrets.get('ci-token', None)
-    if configured_cci_token is not None:
-        # cci token is configured
+    if configured_cci_token is not None and t is not None:
+        # cci token is configured and we were passed a token to check
+        app.logger.debug("Checking a token")
         return configured_cci_token == t
     else:
-        # no cci token configured
+        # no cci token configured or we weren't passed a token to check
         return False
 
 
@@ -170,7 +171,8 @@ def index(location=None):
 
     # this controll flow is starting to get hairy and I don't see test coverage
     # let's look into refactoring for clarity.
-    if authentic_cci_token(flask.request.headers.get('X-CI-Token', None)):
+    if authentic_cci_token(
+            flask.request.headers.get('X-CI-Token', None).strip()):
         app.logger.debug("Application token authenticted")
     elif 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
