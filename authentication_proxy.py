@@ -173,7 +173,7 @@ def index(location=None):
     # let's look into refactoring for clarity.
     if authentic_cci_token(
             flask.request.headers.get('X-CI-Token', None).strip()):
-        app.logger.debug("Application token authenticted")
+        app.logger.debug("CI token authenticted")
     elif 'credentials' not in flask.session:
         app.logger.debug("No credentials, initializing OAuth2workflow")
         return flask.redirect(flask.url_for('oauth2callback'))
