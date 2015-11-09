@@ -27,6 +27,7 @@ ADD . /app
 RUN mkdir /var/secrets
 RUN printf 'placeholder' > /var/secrets/google-client-id
 RUN printf 'placeholder' > /var/secrets/google-secret
+RUN printf 'placeholder' > /var/secrets/ci-token
 RUN touch /var/secrets/secret-key
 
 ADD Manifest /Manifest
