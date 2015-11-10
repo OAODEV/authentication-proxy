@@ -144,11 +144,11 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
 
 def authentic_cci_token(t):
     """ returns True if the given token is authentic """
-    configured_cci_token = secrets.get('ci-token', None).strip()
+    configured_cci_token = secrets.get('ci-token', None)
     if configured_cci_token is not None and t is not None:
         # cci token is configured and we were passed a token to check
         app.logger.debug("Checking a token")
-        return configured_cci_token == t
+        return configured_cci_token.strip() == t
     else:
         # no cci token configured or we weren't passed a token to check
         return False
