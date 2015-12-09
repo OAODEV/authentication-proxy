@@ -175,9 +175,8 @@ def index(location=None):
 
     # this controll flow is starting to get hairy and I don't see test coverage
     # let's look into refactoring for clarity.
-    ci_token = flask.request.headers.get('X-CI-Token', None).strip() \
-        if flask.request.headers.get('X-CI-Token', None).strip() else None
-    if authentic_cci_token(ci_token):
+    if authentic_cci_token(
+            flask.request.headers.get('X-CI-Token', '').strip()):
         app.logger.debug("CI token authenticted")
         flask.session['credentials'] = '{"authenticated_token": "CI"}'
     elif 'credentials' not in flask.session:
