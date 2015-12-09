@@ -115,19 +115,18 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
     app.logger.debug("Requesting {}".format(url))
 
     r = {}
+    params = session['args'] if session['args'] else None
+    kwargs = {'url': url, 'stream': True, 'params': params,
+              'headers': headers_with_auth, 'verify': True}
     try:
         if request.method == 'POST':  # Create
-            r = requests.post(url, stream=True, params=session['args'],
-                              headers=headers_with_auth, verify=True)
+            r = requests.post(**kwargs)
         elif request.method == 'GET':  # Retrieve
-            r = requests.get(url, stream=True, params=session['args'],
-                             headers=headers_with_auth, verify=True)
+            r = requests.get(**kwargs)
         elif request.method == 'PUT':  # Update
-            r = requests.put(url, stream=True, params=session['args'],
-                             headers=headers_with_auth, verify=True)
+            r = requests.put(**kwargs)
         elif request.method == 'DELETE':  # Delete
-            r = requests.delete(url, stream=True, params=session['args'],
-                                headers=headers_with_auth, verify=True)
+            r = requests.delete(**kwargs)
         app.logger.debug("Request response: {}".format(r))
         return r.text, r.status_code, r.headers.items()
 
