@@ -115,7 +115,7 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
     app.logger.debug("Requesting {}".format(url))
 
     r = {}
-    params = session['args'] if session['args'] else None
+    params = session.get('args', None)
     kwargs = {'url': url, 'stream': True, 'params': params,
               'headers': headers_with_auth, 'verify': True}
     try:
@@ -191,8 +191,8 @@ def index(location=None):
                          .format(credentials.id_token['email']))
             return flask.redirect(flask.url_for('oauth2callback'))
         else:
-            app.logger.debug("{} authenticated"
-                         .format(credentials.id_token['email']))
+            app.logger.debug("{} authenticated".format(
+                credentials.id_token['email']))
 
     return get_endpoint_response(
         flask.request,

@@ -2,10 +2,19 @@ import unittest
 import os
 import uuid
 
-from flask import Flask
+from flask import (
+    Flask,
+    request,
+    session,
+)
+from mock import (
+    MagicMock,
+    patch,
+)
 
 from authentication_proxy import (
     authentic_cci_token,
+    get_endpoint_response,
     get_secrets,
     get_url_to_proxy,
     update_header,
@@ -15,10 +24,10 @@ class TestiAdOpsUsers(unittest.TestCase):
 
     def setUp(self):
         self.app = Flask('auth-proxy')
+        self.app.secret_key = 'testkey'
         self.client = self.app.test_client()
 
     def tearDown(self):
-        """ Restores original environment variables """
         pass
 
     def test_sanity(self):
@@ -26,6 +35,85 @@ class TestiAdOpsUsers(unittest.TestCase):
 
         four = 2+2
         self.assertEqual(four, 4, "Um ... 2+2 doesn't equal 4?")
+
+    def test_get_endpoint_response(self):
+        """ Should forward requests and responses """
+
+        def test_path(path, method):
+            # set up
+            update_header_patcher = patch(
+                'authentication_proxy.update_header',
+                return_value={'X-Mock-Header': 'foo'},
+            )
+            mock_update_header = update_header_patcher.start()
+            mock_response = MagicMock()
+            post_patcher = patch(
+                'authentication_proxy.requests.post',
+                return_value=mock_response,
+            )
+            mock_post = post_patcher.start()
+            get_patcher = patch(
+                'authentication_proxy.requests.get',
+                return_value=mock_response,
+            )
+            mock_get = get_patcher.start()
+            put_patcher = patch(
+                'authentication_proxy.requests.put',
+                return_value=mock_response,
+            )
+            mock_put = put_patcher.start()
+            delete_patcher = patch(
+                'authentication_proxy.requests.delete',
+                return_value=mock_response,
+            )
+            mock_delete = delete_patcher.start()
+
+            mocks = {
+                "POST": mock_post,
+                "GET": mock_get,
+                "PUT": mock_put,
+                "DELETE": mock_delete,
+            }
+
+            with self.app.test_request_context(path, method=method):
+                if request.args:
+                    session['args'] = request.args
+
+                # run SUT
+                text, status, headers = get_endpoint_response(
+                    request,
+                    session,
+                    path,
+                    'mock_host',
+                    '1234',
+                )
+
+                params = None
+                if request.args:
+                    params = request.args
+
+                # confirm assumptions
+                mocks[method].assert_called_once_with(**{
+                    'url': 'http://mock_host:1234/{}'.format(path),
+                    'stream': True,
+                    'params': params,
+                    'headers': {'X-Mock-Header': 'foo'},
+                    'verify': True,
+                })
+
+            # tear down
+            patch.stopall()
+
+        # test each path with and without trailing slash, and with args
+        test_paths = [
+            'path', 'path/', 'path?a=b',
+            'a/b/c', 'a/b/c/', 'a/b/c?a=b',
+            '/', '//', '/?ab=cd'
+        ]
+        methods = ["POST", "GET", "PUT", "DELETE"]
+        # test all pairs of paths and methods
+        for p, m in [(p, m) for p in test_paths for m in methods]:
+            test_path(p, m)
 
     def test_get_secrets(self):
         """ get secrets should return a dict of secrets """
