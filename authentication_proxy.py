@@ -115,19 +115,18 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
     app.logger.debug("Requesting {}".format(url))
 
     r = {}
+    params = session.get('args', None)
+    kwargs = {'url': url, 'stream': True, 'params': params,
+              'headers': headers_with_auth, 'verify': True}
     try:
         if request.method == 'POST':  # Create
-            r = requests.post(url, stream=True, params=session['args'],
-                              headers=headers_with_auth, verify=True)
+            r = requests.post(**kwargs)
         elif request.method == 'GET':  # Retrieve
-            r = requests.get(url, stream=True, params=session['args'],
-                             headers=headers_with_auth, verify=True)
+            r = requests.get(**kwargs)
         elif request.method == 'PUT':  # Update
-            r = requests.put(url, stream=True, params=session['args'],
-                             headers=headers_with_auth, verify=True)
+            r = requests.put(**kwargs)
         elif request.method == 'DELETE':  # Delete
-            r = requests.delete(url, stream=True, params=session['args'],
-                                headers=headers_with_auth, verify=True)
+            r = requests.delete(**kwargs)
         app.logger.debug("Request response: {}".format(r))
         return r.text, r.status_code, r.headers.items()
 
@@ -144,11 +143,11 @@ def get_endpoint_response(request, session, location, service_host=SERVICE_HOST,
 
 def authentic_cci_token(t):
     """ returns True if the given token is authentic """
-    configured_cci_token = secrets.get('ci-token', None).strip()
+    configured_cci_token = secrets.get('ci-token', None)
     if configured_cci_token is not None and t is not None:
         # cci token is configured and we were passed a token to check
         app.logger.debug("Checking a token")
-        return configured_cci_token == t
+        return configured_cci_token.strip() == t
     else:
         # no cci token configured or we weren't passed a token to check
         return False
@@ -177,7 +176,7 @@ def index(location=None):
     # this controll flow is starting to get hairy and I don't see test coverage
     # let's look into refactoring for clarity.
     if authentic_cci_token(
-            flask.request.headers.get('X-CI-Token', None).strip()):
+            flask.request.headers.get('X-CI-Token', '').strip()):
         app.logger.debug("CI token authenticted")
         flask.session['credentials'] = '{"authenticated_token": "CI"}'
     elif 'credentials' not in flask.session:
@@ -192,8 +191,8 @@ def index(location=None):
                          .format(credentials.id_token['email']))
             return flask.redirect(flask.url_for('oauth2callback'))
         else:
-            app.logger.debug("{} authenticated"
-                         .format(credentials.id_token['email']))
+            app.logger.debug("{} authenticated".format(
+                credentials.id_token['email']))
 
     return get_endpoint_response(
         flask.request,
